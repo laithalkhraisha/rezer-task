@@ -1,0 +1,167 @@
+﻿@page "/"
+@using BlazorApp1.Shared;
+
+<div class="container">
+    <h1>Contacts</h1>
+
+    <div class="row">
+        <div class="col">
+            <label>Sort By:</label>
+            <select class="form-control" @bind="sortBy">
+               
+                <option value="FirstName">First Name</option>
+                <option value="LastName">Last Name</option>
+                
+            </select>
+        </div>
+        <div class="col">
+            <label>Sort Order:</label>
+            <select class="form-control" @bind="sortOrder">
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
+    </div>
+
+    @if (contacts == null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else
+    {
+        <div>
+            <h2>Contact List</h2>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var contact in sortedContacts)
+                    {
+                        <tr>
+                            <td>@contact.Id</td>
+                            <td>@contact.FirstName</td>
+                            <td>@contact.LastName</td>
+                            <td>@contact.Email</td>
+                            <td>@contact.PhoneNumber</td>
+                            <td>
+                                <button class="btn btn-primary" @onclick="() => EditContact(contact)">Edit</button>
+                                <button class="btn btn-danger" @onclick="() => DeleteContact(contact)">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div>
+            <h2>Add/Edit Contact</h2>
+
+            <form @onsubmit="SaveContact">
+                <div class="form-group">
+                    <label for="firstName">First Name</label>
+                    <input type="text" class="form-control" id="firstName" @bind="editContact.FirstName" required>
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name</label>
+                    <input type="text" class="form-control" id="lastName" @bind="editContact.LastName" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" @bind="editContact.Email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phoneNumber">Phone Number</label>
+                    <input type="number" class="form-control" id="phoneNumber" @bind="editContact.PhoneNumber" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+            </form>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Contact> contacts;
+    private Contact editContact = new Contact();
+    private string sortBy = "Id";
+    private string sortOrder = "asc";
+
+    protected override void OnInitialized()
+    {
+        // Initialize the contacts list with some sample data
+        contacts = new List<Contact>
+        {
+            
+        };
+    }
+
+    private List<Contact> sortedContacts
+    {
+        get
+        {
+            switch (sortBy.ToLower())
+            {
+                case "firstname":
+                    return sortOrder.ToLower() == "asc" ? contacts.OrderBy(c => c.FirstName).ToList() :
+                                                           contacts.OrderByDescending(c => c.FirstName).ToList();
+                case "lastname":
+                    return sortOrder.ToLower() == "asc" ? contacts.OrderBy(c => c.LastName).ToList() :
+                                                           contacts.OrderByDescending(c => c.LastName).ToList();
+                default:
+                    // Handle unknown sortBy values, maybe return unsorted list
+                    return contacts.ToList();
+            }
+        }
+    }
+
+
+    private void EditContact(Contact contact)
+    {
+        editContact = new Contact
+            {
+                Id = contact.Id,
+                FirstName = contact.FirstName,
+                LastName = contact.LastName,
+                Email = contact.Email,
+                PhoneNumber = contact.PhoneNumber
+            };
+    }
+
+    private void SaveContact()
+    {
+        if (editContact != null)
+        {
+            if (editContact.Id == 0)
+            {
+                editContact.Id = contacts != null ? contacts.Count + 1 : 1;
+                contacts?.Add(editContact);
+            }
+            else
+            {
+                var existingContact = contacts.FirstOrDefault(c => c.Id == editContact.Id);
+                if (existingContact != null)
+                {
+                    existingContact.FirstName = editContact.FirstName;
+                    existingContact.LastName = editContact.LastName;
+                    existingContact.Email = editContact.Email;
+                    existingContact.PhoneNumber = editContact.PhoneNumber;
+                }
+            }
+
+            editContact = new Contact();
+        }
+    }
+
+    private void DeleteContact(Contact contact)
+    {
+        contacts?.Remove(contact);
+    }
+}
